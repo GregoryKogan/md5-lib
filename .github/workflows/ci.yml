@@ -33,3 +33,60 @@ jobs:
         with:
           name: test-results-${{ matrix.os }}
           path: build/Testing/**/Test.xml
+
+  coverage:
+    needs: build_and_test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install gcovr
+        run: sudo apt-get update && sudo apt-get install -y gcovr
+
+      - name: Configure CMake for Coverage
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_FLAGS="--coverage -fprofile-abs-path"
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          -DCMAKE_SHARED_LINKER_FLAGS="--coverage"
+
+      - name: Build with Coverage
+        run: cmake --build build
+
+      - name: Run Tests for Coverage
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Generate Coverage Report (XML)
+        run: >
+          gcovr --xml-pretty -o coverage.xml
+          --filter "src/.*"
+          --exclude "tests/.*"
+          build
+
+      - name: Extract Coverage Percentage
+        id: extract_coverage
+        run: |
+          COVERAGE=$(gcovr --xml -o - --filter "src/.*" --exclude "tests/.*" build | \
+                     grep -oP 'line-rate="\K[^"]+')
+          PERCENTAGE=$(awk "BEGIN {printf \"%.0f%%\", ${COVERAGE}*100}")
+          echo "percentage=${PERCENTAGE}" >> $GITHUB_OUTPUT
+
+      - name: Create Coverage Badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: e7f979d87a15bcaf7db7f64c68e09fb8
+          filename: md5-lib-coverage.json
+          label: Coverage
+          message: ${{ steps.extract_coverage.outputs.percentage }}
+          color: green
+          namedLogo: C++
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
