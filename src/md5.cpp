@@ -1,5 +1,6 @@
 #include "md5.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <iomanip>
@@ -10,6 +11,10 @@ namespace {
 
 using uint32 = std::uint32_t;
 using uint64 = std::uint64_t;
+
+constexpr std::size_t k_block_size = 64;   // in bytes
+constexpr std::size_t k_digest_size = 16;  // in bytes
+constexpr std::size_t k_words_per_block = k_block_size / sizeof(uint32);
 
 constexpr uint32 S11 = 7, S12 = 12, S13 = 17, S14 = 22;
 constexpr uint32 S21 = 5, S22 = 9, S23 = 14, S24 = 20;
@@ -41,21 +46,18 @@ constexpr uint32 rotate_left(uint32 x, uint32 n) {
 class MD5_CTX {
  public:
   MD5_CTX();
-
   void update(const unsigned char* data, std::size_t size);
-
-  [[nodiscard]] std::array<unsigned char, 16> finalize();
+  [[nodiscard]] std::array<unsigned char, k_digest_size> finalize();
 
  private:
-  void transform(const unsigned char block[64]);
-
+  void transform(const unsigned char block[k_block_size]);
   static void encode(unsigned char* dest, const uint32* src, std::size_t len);
   static void decode(uint32* dest, const unsigned char* src, std::size_t len);
 
   std::array<uint32, 4> state_ = {0x67452301, 0xefcdab89, 0x98badcfe,
                                   0x10325476};
   uint64 bit_count_ = 0;
-  std::array<unsigned char, 64> buffer_{};
+  std::array<unsigned char, k_block_size> buffer_{};
   std::size_t buffer_used_ = 0;
 };
 
@@ -67,22 +69,22 @@ void MD5_CTX::update(const unsigned char* data, const std::size_t size) {
   std::size_t data_offset = 0;
 
   if (buffer_used_ > 0) {
-    const std::size_t space_in_buffer = 64 - buffer_used_;
+    const std::size_t space_in_buffer = k_block_size - buffer_used_;
     const std::size_t bytes_to_copy = std::min(size, space_in_buffer);
 
     std::memcpy(buffer_.data() + buffer_used_, data, bytes_to_copy);
     buffer_used_ += bytes_to_copy;
     data_offset += bytes_to_copy;
 
-    if (buffer_used_ == 64) {
+    if (buffer_used_ == k_block_size) {
       transform(buffer_.data());
       buffer_used_ = 0;
     }
   }
 
-  while (size - data_offset >= 64) {
+  while (size - data_offset >= k_block_size) {
     transform(data + data_offset);
-    data_offset += 64;
+    data_offset += k_block_size;
   }
 
   const std::size_t remaining = size - data_offset;
@@ -92,21 +94,26 @@ void MD5_CTX::update(const unsigned char* data, const std::size_t size) {
   }
 }
 
-[[nodiscard]] std::array<unsigned char, 16> MD5_CTX::finalize() {
-  std::array<unsigned char, 8> bit_count_bytes{};
-  encode(bit_count_bytes.data(), reinterpret_cast<uint32*>(&bit_count_), 8);
+[[nodiscard]] std::array<unsigned char, k_digest_size> MD5_CTX::finalize() {
+  constexpr std::size_t k_length_size = 8;
+  constexpr std::size_t k_padding_boundary = 56;
+
+  std::array<unsigned char, k_length_size> bit_count_bytes{};
+  encode(bit_count_bytes.data(), reinterpret_cast<uint32*>(&bit_count_),
+         k_length_size);
 
   const unsigned char padding_start[1] = {0x80};
   update(padding_start, 1);
 
-  const std::size_t current_padding = (56 - buffer_used_) % 64;
-  static const unsigned char zero_padding[64] = {0};
-  update(zero_padding, current_padding);
+  const std::size_t num_zero_bytes =
+      (k_padding_boundary - buffer_used_ + k_block_size) % k_block_size;
+  static const unsigned char zero_padding[k_block_size] = {0};
+  update(zero_padding, num_zero_bytes);
 
-  update(bit_count_bytes.data(), 8);
+  update(bit_count_bytes.data(), k_length_size);
 
-  std::array<unsigned char, 16> digest{};
-  encode(digest.data(), state_.data(), 16);
+  std::array<unsigned char, k_digest_size> digest{};
+  encode(digest.data(), state_.data(), k_digest_size);
 
   *this = MD5_CTX();
 
@@ -131,10 +138,10 @@ void MD5_CTX::decode(uint32* dest, const unsigned char* src, std::size_t len) {
   }
 }
 
-void MD5_CTX::transform(const unsigned char block[64]) {
+void MD5_CTX::transform(const unsigned char block[k_block_size]) {
   uint32 a = state_[0], b = state_[1], c = state_[2], d = state_[3];
-  std::array<uint32, 16> x{};
-  decode(x.data(), block, 64);
+  std::array<uint32, k_words_per_block> x{};
+  decode(x.data(), block, k_block_size);
 
 #define MD5_TRANSFORM_STEP(f, a, b, c, d, k, s, i) \
   (a) = rotate_left((a) + f((b), (c), (d)) + x[(k)] + T[(i) - 1], (s)) + (b)
@@ -219,7 +226,8 @@ void MD5_CTX::transform(const unsigned char block[64]) {
   state_[3] += d;
 }
 
-std::string format_digest(const std::array<unsigned char, 16>& digest) {
+std::string format_digest(
+    const std::array<unsigned char, k_digest_size>& digest) {
   std::ostringstream oss;
   oss << std::hex << std::setfill('0');
   for (const auto byte : digest) {
@@ -233,9 +241,10 @@ std::string format_digest(const std::array<unsigned char, 16>& digest) {
 namespace md5_lib {
 
 std::string calculate_md5(std::istream& stream) {
+  constexpr std::size_t k_buffer_size = 8192;
   MD5_CTX context;
 
-  std::vector<char> buffer(8192);
+  std::vector<char> buffer(k_buffer_size);
   while (stream.good()) {
     stream.read(buffer.data(), buffer.size());
     const auto bytes_read = stream.gcount();
