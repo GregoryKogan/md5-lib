@@ -27,13 +27,6 @@ jobs:
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.os }}
-          path: build/Testing/**/Test.xml
-
   coverage:
     needs: build_and_test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
