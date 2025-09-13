@@ -147,6 +147,8 @@ void MD5_CTX::transform(const unsigned char block[k_block_size]) {
   std::array<uint32, k_words_per_block> x{};
   decode(x.data(), block, k_block_size);
 
+  // A macro provides a concise and readable way to closely mirror the
+  // notation used in RFC 1321. It is undefined immediately after use.
 #define MD5_TRANSFORM_STEP(f, a, b, c, d, k, s, i) \
   (a) = rotate_left((a) + f((b), (c), (d)) + x[(k)] + T[(i) - 1], (s)) + (b)
 
