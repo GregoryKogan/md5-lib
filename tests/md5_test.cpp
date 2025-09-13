@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -83,33 +85,50 @@ TEST_F(BoundaryConditionTests, JustOverOneBlock_65_Bytes) {
 class LargeInputTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    temp_filename_ = "md5_large_test_file.tmp";
-    std::ofstream outfile(temp_filename_, std::ios::binary);
+    const std::filesystem::path temp_dir =
+        std::filesystem::temp_directory_path();
+
+    const auto now = std::chrono::high_resolution_clock::now();
+    const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        now.time_since_epoch())
+                        .count();
+    const std::string unique_filename =
+        "md5_test_" + std::to_string(ns) + ".tmp";
+
+    temp_filepath_ = temp_dir / unique_filename;
+
+    std::ofstream outfile(temp_filepath_, std::ios::binary);
     if (!outfile) {
-      GTEST_FAIL() << "Failed to create temporary file for testing.";
+      GTEST_FAIL() << "Failed to create temporary file: " << temp_filepath_;
     }
 
-    // Write 10 MiB of data.
+    // Write 10 MiB of data
     constexpr std::size_t k_file_size = 10 * 1024 * 1024;
     constexpr char k_char_to_write = 'M';
-    std::vector<char> buffer(4096, k_char_to_write);
+    const std::vector<char> buffer(4096, k_char_to_write);
 
     for (std::size_t bytes_written = 0; bytes_written < k_file_size;
          bytes_written += buffer.size()) {
-      outfile.write(buffer.data(), buffer.size());
+      const std::size_t bytes_to_write =
+          std::min(buffer.size(), k_file_size - bytes_written);
+      outfile.write(buffer.data(), bytes_to_write);
     }
   }
 
-  void TearDown() override { std::remove(temp_filename_.c_str()); }
+  void TearDown() override {
+    std::error_code ec;
+    std::filesystem::remove(temp_filepath_, ec);
+  }
 
-  std::string temp_filename_;
+  std::filesystem::path temp_filepath_;
 };
 
 TEST_F(LargeInputTest, StreamMatchesMemoryForLargeFile) {
   const std::string expected_hash = "7599a0f48ceb8311543fb7d7c4dc9235";
 
-  std::ifstream infile(temp_filename_, std::ios::binary);
-  ASSERT_TRUE(infile.is_open()) << "Failed to open temporary file for reading.";
+  std::ifstream infile(temp_filepath_, std::ios::binary);
+  ASSERT_TRUE(infile.is_open())
+      << "Failed to open temporary file for reading: " << temp_filepath_;
 
   const std::string stream_hash = md5_lib::calculate_md5(infile);
 
