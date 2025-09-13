@@ -2,6 +2,8 @@
 
 #include <array>
 #include <cstring>
+#include <iomanip>
+#include <sstream>
 #include <vector>
 
 namespace {
@@ -217,18 +219,49 @@ void MD5_CTX::transform(const unsigned char block[64]) {
   state_[3] += d;
 }
 
+std::string format_digest(const std::array<unsigned char, 16>& digest) {
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0');
+  for (const auto byte : digest) {
+    oss << std::setw(2) << static_cast<int>(byte);
+  }
+  return oss.str();
+}
+
 }  // namespace
 
 namespace md5_lib {
 
-std::string calculate_md5(std::istream& /*stream*/) {
-  // To be implemented
-  return "";
+std::string calculate_md5(std::istream& stream) {
+  MD5_CTX context;
+
+  std::vector<char> buffer(8192);
+  while (stream.good()) {
+    stream.read(buffer.data(), buffer.size());
+    const auto bytes_read = stream.gcount();
+    if (bytes_read > 0) {
+      context.update(reinterpret_cast<const unsigned char*>(buffer.data()),
+                     static_cast<std::size_t>(bytes_read));
+    }
+  }
+
+  if (stream.bad()) {
+    throw std::ios_base::failure("Stream read error.");
+  }
+
+  const auto digest = context.finalize();
+  return format_digest(digest);
 }
 
-std::string calculate_md5(const unsigned char* /*data*/, std::size_t /*size*/) {
-  // To be implemented
-  return "";
+std::string calculate_md5(const unsigned char* data, const std::size_t size) {
+  if (data == nullptr && size > 0) {
+    throw std::invalid_argument("Data pointer is null but size is non-zero.");
+  }
+
+  MD5_CTX context;
+  context.update(data, size);
+  const auto digest = context.finalize();
+  return format_digest(digest);
 }
 
 }  // namespace md5_lib
