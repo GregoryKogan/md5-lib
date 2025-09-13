@@ -26,6 +26,7 @@ namespace md5_lib {
  * a std::string or std::vector's data.
  *
  * @param data A non-null pointer to the beginning of the data block.
+ *             The type is `const unsigned char*` as it is the convention.
  * @param size The size of the data block in bytes.
  * @return A 32-character lowercase hexadecimal string representing the MD5
  * hash.
