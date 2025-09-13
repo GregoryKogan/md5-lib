@@ -98,9 +98,13 @@ void MD5_CTX::update(const unsigned char* data, const std::size_t size) {
   constexpr std::size_t k_length_size = 8;
   constexpr std::size_t k_padding_boundary = 56;
 
+  // This implementation is fully portable by explicitly encoding
+  // the low and high 32-bit words in little-endian format
   std::array<unsigned char, k_length_size> bit_count_bytes{};
-  encode(bit_count_bytes.data(), reinterpret_cast<uint32*>(&bit_count_),
-         k_length_size);
+  uint32 low_word = static_cast<uint32>(bit_count_ & 0xFFFFFFFF);
+  uint32 high_word = static_cast<uint32>((bit_count_ >> 32) & 0xFFFFFFFF);
+  encode(bit_count_bytes.data(), &low_word, 4);
+  encode(bit_count_bytes.data() + 4, &high_word, 4);
 
   const unsigned char padding_start[1] = {0x80};
   update(padding_start, 1);
