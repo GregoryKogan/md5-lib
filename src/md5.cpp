@@ -228,12 +228,14 @@ void MD5_CTX::transform(const unsigned char block[k_block_size]) {
 
 std::string format_digest(
     const std::array<unsigned char, k_digest_size>& digest) {
-  std::ostringstream oss;
-  oss << std::hex << std::setfill('0');
-  for (const auto byte : digest) {
-    oss << std::setw(2) << static_cast<int>(byte);
+  static constexpr char k_hex_chars[] = "0123456789abcdef";
+  std::string result;
+  result.resize(k_digest_size * 2);
+  for (std::size_t i = 0; i < k_digest_size; ++i) {
+    result[i * 2] = k_hex_chars[digest[i] >> 4];
+    result[i * 2 + 1] = k_hex_chars[digest[i] & 0x0F];
   }
-  return oss.str();
+  return result;
 }
 
 }  // namespace
