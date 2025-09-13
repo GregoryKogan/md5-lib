@@ -69,9 +69,7 @@ jobs:
       - name: Extract Coverage Percentage
         id: extract_coverage
         run: |
-          COVERAGE=$(gcovr --xml -o - --filter "src/.*" --exclude "tests/.*" build | \
-                     grep -oP 'line-rate="\K[^"]+')
-          PERCENTAGE=$(awk "BEGIN {printf \"%.0f%%\", ${COVERAGE}*100}")
+          PERCENTAGE=$(gcovr --filter "src/.*" --exclude "tests/.*" build | grep '^TOTAL' | awk '{print $NF}')
           echo "percentage=${PERCENTAGE}" >> $GITHUB_OUTPUT
 
       - name: Create Coverage Badge
