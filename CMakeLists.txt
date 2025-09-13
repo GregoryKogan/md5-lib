@@ -15,6 +15,8 @@ target_include_directories(md5_lib PUBLIC
 
 
 # --- Google Test Integration ---
+cmake_policy(SET CMP0135 NEW)  # CMP0135: Set DOWNLOAD_EXTRACT_TIMESTAMP
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
