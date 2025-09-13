@@ -50,3 +50,30 @@ TEST_F(RFC1321TestVectors, LongStringOfNumbers) {
       "34567890",
       "57edf4a22be3c955ac49da2e2107b67a");
 }
+
+class BoundaryConditionTests : public ::testing::Test {};
+
+TEST_F(BoundaryConditionTests, LessThanOneBlock_PaddingBoundary_55_Bytes) {
+  std::string input(55, 'a');
+  RunTest(input, "ef1772b6dff9a122358552954ad0df65");
+}
+
+TEST_F(BoundaryConditionTests, LessThanOneBlock_PaddingBoundary_56_Bytes) {
+  std::string input(56, 'a');
+  RunTest(input, "3b0c8ac703f828b04c6c197006d17218");
+}
+
+TEST_F(BoundaryConditionTests, LessThanOneBlock_PaddingBoundary_63_Bytes) {
+  std::string input(63, 'a');
+  RunTest(input, "b06521f39153d618550606be297466d5");
+}
+
+TEST_F(BoundaryConditionTests, ExactlyOneBlock_64_Bytes) {
+  std::string input(64, 'a');
+  RunTest(input, "014842d480b571495a4a0363793f7367");
+}
+
+TEST_F(BoundaryConditionTests, JustOverOneBlock_65_Bytes) {
+  std::string input(65, 'a');
+  RunTest(input, "c743a45e0d2e6a95cb859adae0248435");
+}
