@@ -44,7 +44,7 @@ cd build
 ctest --verbose
 ```
 
-## Integrating `md5-lib`
+## Integrating md5-lib
 
 You can integrate `md5-lib` into your own CMake project in several ways.
 
@@ -78,7 +78,7 @@ add_executable(my_app main.cpp)
 target_link_libraries(my_app PRIVATE md5_lib)
 ```
 
-### Method 2: Git Submodule and `add_subdirectory`
+### Method 2: Git Submodule and add_subdirectory()
 
 This method is ideal if you need to work offline or want to lock the dependency to a specific commit in your own Git history.
 
@@ -109,7 +109,7 @@ This method is ideal if you need to work offline or want to lock the dependency 
     target_link_libraries(my_app PRIVATE md5_lib)
     ```
 
-### Method 3: System-Wide Installation and `find_package`
+### Method 3: System-Wide Installation and find_package()
 
 This is a more traditional approach. First, you build and install `md5-lib` on your system, and then your project finds it using `find_package`.
 
