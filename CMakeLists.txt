@@ -37,3 +37,35 @@ target_link_libraries(md5_test PRIVATE
 )
 include(GoogleTest)
 gtest_discover_tests(md5_test)
+
+
+# --- Installation Rules ---
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+install(FILES include/md5.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(TARGETS md5_lib
+  EXPORT md5-lib-targets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(EXPORT md5-lib-targets
+  FILE md5-lib-targets.cmake
+  NAMESPACE md5_lib::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/md5-lib
+)
+
+configure_package_config_file(
+  "cmake/md5-lib-config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/md5-lib-config.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/md5-lib"
+)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/md5-lib-config.cmake"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/md5-lib"
+)
