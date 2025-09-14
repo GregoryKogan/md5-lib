@@ -9,10 +9,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(md5_lib STATIC
   src/md5.cpp
 )
-target_include_directories(md5_lib PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
 
+target_include_directories(md5_lib PUBLIC
+  # For consumers inside this build tree use the source dir.
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  # For consumers of the installed package, use the installed include dir.
+  $<INSTALL_INTERFACE:include>
+)
 
 # --- Google Test Integration ---
 cmake_policy(SET CMP0135 NEW)  # CMP0135: Set DOWNLOAD_EXTRACT_TIMESTAMP
