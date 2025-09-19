@@ -154,7 +154,7 @@ The library exposes its API through the `md5.h` header and the `md5_lib` namespa
 #include <iostream>
 #include <sstream>
 
-#include <md5-lib/md5.h>
+#include <md5.h>
 
 int main() {
     // Example 1: Hashing from an in-memory string
