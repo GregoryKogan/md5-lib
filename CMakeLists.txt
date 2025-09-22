@@ -47,7 +47,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 install(FILES include/md5.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/md5-lib
 )
 
 install(TARGETS md5_lib

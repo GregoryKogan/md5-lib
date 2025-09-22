@@ -66,7 +66,7 @@ include(FetchContent)
 FetchContent_Declare(
   md5-lib
   GIT_REPOSITORY https://github.com/GregoryKogan/md5-lib.git
-  GIT_TAG        v1.0.0  # Use a specific version tag for stability
+  GIT_TAG        v1.1.0  # Use a specific version tag for stability
 )
 FetchContent_MakeAvailable(md5-lib)
 # --------------------
@@ -153,20 +153,21 @@ The library exposes its API through the `md5.h` header and the `md5_lib` namespa
 ```cpp
 #include <iostream>
 #include <sstream>
-#include "md5.h"
+
+#include <md5-lib/md5.h>
 
 int main() {
     // Example 1: Hashing from an in-memory string
     const std::string text = "message digest";
     const unsigned char* data = reinterpret_cast<const unsigned char*>(text.data());
-    std::string hash_mem = md5_lib::calculate_md5(data, text.size());
+    std::string hash_mem = md5_lib::CalculateMD5(data, text.size());
 
     std::cout << "MD5 of \"" << text << "\": " << hash_mem << std::endl;
     // Expected output: MD5 of "message digest": f96b697d7cb7938d525a2f31aaf161d0
 
     // Example 2: Hashing from a std::stringstream
     std::stringstream ss("abcdefghijklmnopqrstuvwxyz");
-    std::string hash_stream = md5_lib::calculate_md5(ss);
+    std::string hash_stream = md5_lib::CalculateMD5(ss);
 
     std::cout << "MD5 of the alphabet: " << hash_stream << std::endl;
     // Expected output: MD5 of the alphabet: c3fcd3d76192e4007dfb496cca67e13b
@@ -177,7 +178,8 @@ int main() {
 
 ## Documentation
 
-For a comprehensive API reference and implementation details, please see the **[Doxygen documentation hosted on GitHub Pages](https://GregoryKogan.github.io/md5-lib/)**.
+For a comprehensive API reference and implementation details, please see the  
+**[Doxygen documentation hosted on GitHub Pages](https://GregoryKogan.github.io/md5-lib/)**.
 
 The documentation is automatically generated and deployed from the `main` branch.
 
