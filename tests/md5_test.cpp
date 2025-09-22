@@ -2,8 +2,10 @@
 
 #include <gtest/gtest.h>
 
+#include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 class RFC1321TestVectors : public ::testing::Test {};
 
@@ -76,4 +78,40 @@ TEST_F(BoundaryConditionTests, ExactlyOneBlock_64_Bytes) {
 TEST_F(BoundaryConditionTests, JustOverOneBlock_65_Bytes) {
   std::string input(65, 'a');
   RunTest(input, "c743a45e0d2e6a95cb859adae0248435");
+}
+
+class LargeInputTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    temp_filename_ = "md5_large_test_file.tmp";
+    std::ofstream outfile(temp_filename_, std::ios::binary);
+    if (!outfile) {
+      GTEST_FAIL() << "Failed to create temporary file for testing.";
+    }
+
+    // Write 10 MiB of data.
+    constexpr std::size_t k_file_size = 10 * 1024 * 1024;
+    constexpr char k_char_to_write = 'M';
+    std::vector<char> buffer(4096, k_char_to_write);
+
+    for (std::size_t bytes_written = 0; bytes_written < k_file_size;
+         bytes_written += buffer.size()) {
+      outfile.write(buffer.data(), buffer.size());
+    }
+  }
+
+  void TearDown() override { std::remove(temp_filename_.c_str()); }
+
+  std::string temp_filename_;
+};
+
+TEST_F(LargeInputTest, StreamMatchesMemoryForLargeFile) {
+  const std::string expected_hash = "7599a0f48ceb8311543fb7d7c4dc9235";
+
+  std::ifstream infile(temp_filename_, std::ios::binary);
+  ASSERT_TRUE(infile.is_open()) << "Failed to open temporary file for reading.";
+
+  const std::string stream_hash = md5_lib::calculate_md5(infile);
+
+  EXPECT_EQ(stream_hash, expected_hash);
 }
