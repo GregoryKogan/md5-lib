@@ -82,6 +82,13 @@ TEST_F(BoundaryConditionTests, JustOverOneBlock_65_Bytes) {
   RunTest(input, "c743a45e0d2e6a95cb859adae0248435");
 }
 
+class APITest : public ::testing::Test {};
+
+TEST_F(APITest, ThrowsOnNullptr) {
+  EXPECT_THROW(static_cast<void>(md5_lib::calculate_md5(nullptr, 10)),
+               std::invalid_argument);
+}
+
 class LargeInputTest : public ::testing::Test {
  protected:
   void SetUp() override {
