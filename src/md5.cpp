@@ -1,9 +1,10 @@
 #include "md5.h"
 
-#include <algorithm>
-#include <array>
 #include <cstdint>
 #include <cstring>
+
+#include <algorithm>
+#include <array>
 #include <iomanip>
 #include <sstream>
 #include <vector>
