@@ -6,6 +6,10 @@ cmake_install.cmake
 compile_commands.json
 Makefile
 
+# Generated Documentation
+docs/
+coverage.html
+
 # Other
 .DS_Store
 .vscode/
