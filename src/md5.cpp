@@ -23,7 +23,7 @@ constexpr uint32 S21 = 5, S22 = 9, S23 = 14, S24 = 20;
 constexpr uint32 S31 = 4, S32 = 11, S33 = 16, S34 = 23;
 constexpr uint32 S41 = 6, S42 = 10, S43 = 15, S44 = 21;
 
-// The T constants are defined by the RFC.
+// T constants defined in the RFC.
 constexpr std::array<uint32, 64> T = {
     0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a,
     0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
@@ -46,8 +46,6 @@ constexpr uint32 RotateLeft(uint32 x, uint32 n) {
   return (x << n) | (x >> (32 - n));
 }
 
-// A helper function to replace the previous macro. This improves type safety
-// and is compliant with the Google Style Guide's restrictions on macros.
 template <typename Func>
 constexpr void MD5TransformStep(Func f, uint32& a, uint32 b, uint32 c, uint32 d,
                                 uint32 k, uint32 s, uint32 i,

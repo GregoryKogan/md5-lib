@@ -103,8 +103,7 @@ class LargeInputTest : public ::testing::Test {
       GTEST_FAIL() << "Failed to create temporary file: " << temp_filepath_;
     }
 
-    // Write 10 MiB of data
-    constexpr std::size_t kFileSize = 10 * 1024 * 1024;
+    constexpr std::size_t kFileSize = 10 * 1024 * 1024;  // 10 MiB
     constexpr char kCharToWrite = 'M';
     const std::vector<char> buffer(4096, kCharToWrite);
 
